@@ -1,5 +1,12 @@
 package com.patikadev.Model;
 
+import com.patikadev.Helper.DBConnector;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
 public class User {
     private int id;
     private String name;
@@ -16,6 +23,32 @@ public class User {
         this.password = password;
         this.type = type;
     }
+
+    // Controller içerisinde olabilecek bir static Method
+    // Kullanıcı listesini geri döndüren method
+    public static ArrayList<User> getList(){
+        ArrayList<User> userList = new ArrayList<>();
+        String query = "SELECT * FROM userTable";
+        User obj;
+        try {
+            Statement statement = DBConnector.getInstance().createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()){
+                obj = new User();
+                obj.setId(resultSet.getInt("id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setUsername(resultSet.getString("username"));
+                obj.setPassword(resultSet.getString("password"));
+                obj.setType(resultSet.getString("type"));
+                userList.add(obj);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return userList;
+    }
+
 
     public int getId() {
         return id;
