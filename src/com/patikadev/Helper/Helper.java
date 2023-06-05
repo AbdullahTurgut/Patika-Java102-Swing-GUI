@@ -34,4 +34,40 @@ public class Helper {
         }
         return point;
     }
+
+    // textField ların içi dolu mu boş mu için boolean döndürecek method
+    public static boolean isFieldEmpty(JTextField field) {
+        return field.getText().trim().isEmpty(); // boş ise
+    }
+
+    // JOptionPane ile mesaj gösterme kısmı
+    public static void showMsg(String str) {
+        optionPaneTR();
+        String msg;
+        String title;
+        switch (str) {
+            case "fill":
+                msg = "Lütfen tüm alanları doldurunuz !";
+                title = "Hata !";
+                break;
+            case "done":
+                msg = "İşlem başarılı !";
+                title = "Sonuç";
+                break;
+            case "error":
+                msg = "Bir hata oluştu !";
+                title = "Hata!";
+                break;
+            default:
+                msg = str;
+                title = "Mesaj";
+        }
+
+        JOptionPane.showMessageDialog(null, msg, title, JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // hata mesajındaki Ok kısmı için
+    public static void optionPaneTR() {
+        UIManager.put("OptionPane.okButtonText", "Tamam");
+    }
 }
