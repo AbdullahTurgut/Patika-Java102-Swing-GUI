@@ -5,6 +5,7 @@ import com.patikadev.Helper.Helper;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class User {
     private int id;
@@ -105,7 +106,7 @@ public class User {
         String query = "DELETE FROM userTable WHERE id = ?";
         try {
             PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
-            pr.setInt(1,id);
+            pr.setInt(1, id);
 
             return pr.executeUpdate() != -1;
         } catch (SQLException e) {
@@ -114,6 +115,67 @@ public class User {
 
         return true; // varsayılan olarak
     }
+
+    // Update method
+    public static boolean update(int id, String name, String username, String password, String type) {
+        String query = "UPDATE userTable SET name = ?, username = ? , password = ? , type = ? WHERE id = ?";
+        // aynı kullanıcı adlı Kullanıcı girişi sorgusu için
+        User findUser = User.getFetch(username);
+        if (findUser != null && findUser.getId() != id) { // username değişmediği takdirde hatayı önlemek için
+            Helper.showMsg("Bu kullanıcı adı alınmış. Lütfen farklı bir kullanıcı adı giriniz.");
+            return false; // bir değer var demektir ve false dönmesi gerekir
+        }
+        try {
+            PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
+            pr.setString(1, name);
+            pr.setString(2, username);
+            pr.setString(3, password);
+            pr.setObject(4, type, Types.OTHER);
+            pr.setInt(5, id);
+            return pr.executeUpdate() != -1;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return true;
+    }
+
+    // arama yaparken kullanacağımız ArrayList<User> döndürecek method
+    public static ArrayList<User> searchUserList(String query) {
+        ArrayList<User> userList = new ArrayList<>();
+        User obj;
+        try {
+            Statement statement = DBConnector.getInstance().createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()) {
+                obj = new User();
+                obj.setId(resultSet.getInt("id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setUsername(resultSet.getString("username"));
+                obj.setPassword(resultSet.getString("password"));
+                obj.setType(resultSet.getString("type"));
+                userList.add(obj);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return userList;
+    }
+
+    // arama sorgumuz için dinamik bir yapı
+    public static String searchQuery(String name, String username, String type) {
+        String query = "SELECT * FROM userTable WHERE username LIKE '%{{username}}%' AND name LIKE '%{{name}}%'";
+        // burda replace ile parametreleri değiştireceğiz
+        query = query.replace("{{username}}", username);
+        query = query.replace("{{name}}", name);
+//        if(!type.isEmpty())
+//        query = query.replace("{{type}}", type);
+
+        return query;
+    }
+
 
     public int getId() {
         return id;

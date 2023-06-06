@@ -5,11 +5,11 @@ import com.patikadev.Model.Operator;
 import com.patikadev.Model.User;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 
 public class OperatorGUI extends JFrame {
@@ -30,6 +30,10 @@ public class OperatorGUI extends JFrame {
     private JButton btn_user_add;
     private JTextField fld_user_id;
     private JButton btn_user_delete;
+    private JTextField fld_search_user_name;
+    private JTextField fld_search_user_username;
+    private JComboBox cmb_search_user_type;
+    private JButton btn_user_search;
 
     //Tablomuz için bir modele ihtiyacımız var
     private DefaultTableModel mdl_user_list;
@@ -90,6 +94,22 @@ public class OperatorGUI extends JFrame {
             }
         });
 
+        // tablomuzda değiştirmek istediğimiz bir veriyi dinlemek için (new TableModelListener
+        tbl_user_list.getModel().addTableModelListener(e -> {
+            if (e.getType() == TableModelEvent.UPDATE) {
+                int user_id = Integer.parseInt(tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 0).toString());
+                String user_name = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 1).toString();
+                String user_username = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 2).toString();
+                String user_password = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 3).toString();
+                String user_type = tbl_user_list.getValueAt(tbl_user_list.getSelectedRow(), 4).toString();
+
+                if (User.update(user_id, user_name, user_username, user_password, user_type)) {
+                    Helper.showMsg("done");
+                }
+                loadUserModel(); // bu şekilde hata versede değiştirmemesı için tabloyu hep veri tabanından çekiyoruz
+            }
+        });
+
         // Butona tıklama ile yapılacak
         btn_user_add.addActionListener(e -> {
             if (Helper.isFieldEmpty(fld_user_name) ||
@@ -130,14 +150,45 @@ public class OperatorGUI extends JFrame {
                     Helper.showMsg("error");
             }
         });
+
+        // veri ile arama yapmak için
+        btn_user_search.addActionListener(e -> {
+            String name = fld_search_user_name.getText();
+            String username = fld_search_user_username.getText();
+            String type = cmb_search_user_type.getSelectedItem().toString();
+
+            String query = User.searchQuery(name, username, type);
+            ArrayList<User> searchingUser = User.searchUserList(query);
+
+            loadUserModel(searchingUser);
+        });
     }
 
+    // veritabanı listesi için
     private void loadUserModel() {
         // Burda tabloyu ekleme işleminden sonra güncellemek için önce
         DefaultTableModel clearModel = (DefaultTableModel) tbl_user_list.getModel();
         clearModel.setRowCount(0); // tablodaki tüm değerleri 0 lar
         // ardından tabloyu tekrar getirmek bu problemi çözücek
         for (User obj : User.getList()) {
+            int i = 0;
+            row_user_list[i++] = obj.getId();
+            row_user_list[i++] = obj.getName();
+            row_user_list[i++] = obj.getUsername();
+            row_user_list[i++] = obj.getPassword();
+            row_user_list[i++] = obj.getType();
+            // oluşturduğumuz bu satır modelini modelimize ekleyebiliriz
+            mdl_user_list.addRow(row_user_list);
+        }
+    }
+
+    // Arama yaparken aldığımız ArrayList için
+    private void loadUserModel(ArrayList<User> list) {
+        // Burda tabloyu ekleme işleminden sonra güncellemek için önce
+        DefaultTableModel clearModel = (DefaultTableModel) tbl_user_list.getModel();
+        clearModel.setRowCount(0); // tablodaki tüm değerleri 0 lar
+        // ardından tabloyu tekrar getirmek bu problemi çözücek
+        for (User obj : list) {
             int i = 0;
             row_user_list[i++] = obj.getId();
             row_user_list[i++] = obj.getName();
