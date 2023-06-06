@@ -55,7 +55,7 @@ public class User {
         String query = "INSERT INTO userTable (name, username, password, type) VALUES (?,?,?,?)";
         // aynı kullanıcı adlı Kullanıcı girişi sorgusu için
         User findUser = User.getFetch(username);
-        if(findUser != null){
+        if (findUser != null) {
             Helper.showMsg("Bu kullanıcı adı alınmış. Lütfen farklı bir kullanıcı adı giriniz.");
             return false; // bir değer var demektir ve false dönmesi gerekir
         }
@@ -66,7 +66,7 @@ public class User {
             pr.setString(3, password);
             pr.setObject(4, type, Types.OTHER); // enum type olduğu için
             int response = pr.executeUpdate();
-            if(response == -1){
+            if (response == -1) {
                 Helper.showMsg("error");
             }
             return response != -1; // başarılı ise 1 değilse -1
@@ -85,7 +85,7 @@ public class User {
             PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
             pr.setString(1, username);
             ResultSet resultSet = pr.executeQuery();
-            if (resultSet.next()){
+            if (resultSet.next()) {
                 obj = new User();
                 obj.setId(resultSet.getInt("id"));
                 obj.setName(resultSet.getString("name"));
@@ -98,6 +98,21 @@ public class User {
         }
 
         return obj;
+    }
+
+    // Silme işlemi için
+    public static boolean delete(int id) {
+        String query = "DELETE FROM userTable WHERE id = ?";
+        try {
+            PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
+            pr.setInt(1,id);
+
+            return pr.executeUpdate() != -1;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return true; // varsayılan olarak
     }
 
     public int getId() {
