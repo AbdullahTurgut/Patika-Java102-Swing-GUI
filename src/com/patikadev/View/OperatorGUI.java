@@ -2,13 +2,17 @@ package com.patikadev.View;
 
 import com.patikadev.Helper.*;
 import com.patikadev.Model.Operator;
+import com.patikadev.Model.Patika;
 import com.patikadev.Model.User;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 
@@ -34,11 +38,26 @@ public class OperatorGUI extends JFrame {
     private JTextField fld_search_user_username;
     private JComboBox cmb_search_user_type;
     private JButton btn_user_search;
+    private JPanel pnl_patika_list;
+    private JScrollPane scrll_patika_list;
+    private JTable tbl_patika_list;
+    private JPanel pnl_patika_add;
+    private JTextField fld_patika_name;
+    private JButton btn_patika_add;
 
     //Tablomuz için bir modele ihtiyacımız var
     private DefaultTableModel mdl_user_list;
     //listelerimizi tutmak için bir array'e ihtiyacımız var
     private Object[] row_user_list;
+
+
+    // Patika Tablomuz için bir model
+    private DefaultTableModel mdl_patika_list;
+    private Object[] row_patika_list;
+
+    // Patika Listemizde sağ tık ile düzenleme ve silme işlemi yapabilmek için
+    private JPopupMenu patikaMenu;
+
 
     private final Operator operator;
 
@@ -109,6 +128,40 @@ public class OperatorGUI extends JFrame {
                 loadUserModel(); // bu şekilde hata versede değiştirmemesı için tabloyu hep veri tabanından çekiyoruz
             }
         });
+        // ## ModelUserList
+
+        // PatikaList
+
+        patikaMenu = new JPopupMenu();
+        JMenuItem updateMenu = new JMenuItem("Güncelle");
+        JMenuItem deleteMenu = new JMenuItem("Sil");
+        patikaMenu.add(updateMenu);
+        patikaMenu.add(deleteMenu);
+
+        mdl_patika_list = new DefaultTableModel();
+        Object[] col_patika_list = {"ID", "Patika Adı"};
+        mdl_patika_list.setColumnIdentifiers(col_patika_list);
+        row_patika_list = new Object[col_patika_list.length];
+        loadPatikaModel();
+
+        tbl_patika_list.setModel(mdl_patika_list);
+        // popup menüleri modelden sonra tabloya koyabiliriz
+        tbl_patika_list.setComponentPopupMenu(patikaMenu);
+
+        tbl_patika_list.getTableHeader().setReorderingAllowed(false);
+        tbl_patika_list.getColumnModel().getColumn(0).setMaxWidth(75);// id kısmı genişliği
+
+        // patika tablomuzda update delete için hangi satıra tıklandığını bulmak için
+        tbl_patika_list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                Point point = e.getPoint();
+                int selected_row = tbl_patika_list.rowAtPoint(point);
+                tbl_patika_list.setRowSelectionInterval(selected_row, selected_row);//sağ tıkladığımız yer seçili hale geldi
+            }
+        });
+        // ## PatikaList
+
 
         // Butona tıklama ile yapılacak
         btn_user_add.addActionListener(e -> {
@@ -162,6 +215,41 @@ public class OperatorGUI extends JFrame {
 
             loadUserModel(searchingUser);
         });
+
+        // Çıkış yap Butonu için
+        btn_logout.addActionListener(e -> {
+            dispose(); // kapatma işlemi sağlar dispose
+        });
+
+        // Patika listemize ekleme yapmak için
+        btn_patika_add.addActionListener(e -> {
+            if (Helper.isFieldEmpty(fld_patika_name)) {
+                Helper.showMsg("fill");
+            } else {
+                if (Patika.add(fld_patika_name.getText())) {
+                    Helper.showMsg("done");
+                    loadPatikaModel();
+                    fld_patika_name.setText(null);
+                } else {
+                    Helper.showMsg("error");
+                }
+            }
+        });
+    }
+
+
+    // Veritabanı patika listesi için
+    private void loadPatikaModel() {
+        DefaultTableModel clearModel = (DefaultTableModel) tbl_patika_list.getModel();
+        clearModel.setRowCount(0);
+        int i = 0;
+        for (Patika obj : Patika.getList()) {
+            i = 0;
+            row_patika_list[i++] = obj.getId();
+            row_patika_list[i++] = obj.getName();
+            mdl_patika_list.addRow(row_patika_list);
+        }
+
     }
 
     // veritabanı listesi için
@@ -170,8 +258,9 @@ public class OperatorGUI extends JFrame {
         DefaultTableModel clearModel = (DefaultTableModel) tbl_user_list.getModel();
         clearModel.setRowCount(0); // tablodaki tüm değerleri 0 lar
         // ardından tabloyu tekrar getirmek bu problemi çözücek
+        int i = 0;
         for (User obj : User.getList()) {
-            int i = 0;
+            i = 0;
             row_user_list[i++] = obj.getId();
             row_user_list[i++] = obj.getName();
             row_user_list[i++] = obj.getUsername();

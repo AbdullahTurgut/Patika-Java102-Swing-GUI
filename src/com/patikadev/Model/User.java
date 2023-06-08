@@ -170,9 +170,11 @@ public class User {
         // burda replace ile parametreleri değiştireceğiz
         query = query.replace("{{username}}", username);
         query = query.replace("{{name}}", name);
-//        if(!type.isEmpty())
-//        query = query.replace("{{type}}", type);
-
+        if (!type.isEmpty()) {
+            query += " AND type = '{{type}}'";
+            query = query.replace("{{type}}", type);
+        }
+//        System.out.println(query);
         return query;
     }
 
