@@ -50,6 +50,54 @@ public class Patika {
         return true;
     }
 
+    // UpdatePatikaGUI için güncelleme
+    public static boolean update(int id, String name) {
+        String query = "UPDATE patika SET name = ? WHERE id = ?";
+        try {
+            PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
+            pr.setString(1, name);
+            pr.setInt(2, id);
+            return pr.executeUpdate() != -1;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return true;
+    }
+
+    // bir tane değeri alıp Patika nesnesi olarak geri döndüren bir method
+    public static Patika getFetch(int id) {
+        Patika obj = null;
+        String query = "SELECT * FROM patika WHERE id = ?";
+        try {
+            PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
+            pr.setInt(1, id);
+            ResultSet rs = pr.executeQuery();
+            if (rs.next()) {
+                obj = new Patika(rs.getInt("id"), rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return obj;
+    }
+
+    // delete butonu için
+    public static boolean delete(int id){
+        String query = "DELETE FROM patika WHERE id = ?";
+
+        try {
+            PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
+            pr.setInt(1,id);
+            return pr.executeUpdate() != -1;
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return true;
+    }
+
     public int getId() {
         return id;
     }
