@@ -1,6 +1,7 @@
 package com.patikadev.View;
 
 import com.patikadev.Helper.*;
+import com.patikadev.Model.Course;
 import com.patikadev.Model.Operator;
 import com.patikadev.Model.Patika;
 import com.patikadev.Model.User;
@@ -41,6 +42,15 @@ public class OperatorGUI extends JFrame {
     private JPanel pnl_patika_add;
     private JTextField fld_patika_name;
     private JButton btn_patika_add;
+    private JPanel pnl_course_list;
+    private JScrollPane scrl_course_list;
+    private JTable tbl_course_list;
+    private JPanel pnl_course_add;
+    private JTextField fld_course_name;
+    private JTextField fld_course_lang;
+    private JComboBox cmb_course_patika;
+    private JComboBox cmb_course_user;
+    private JButton btn_course_add;
 
     //Tablomuz için bir modele ihtiyacımız var
     private DefaultTableModel mdl_user_list;
@@ -56,6 +66,9 @@ public class OperatorGUI extends JFrame {
     private JPopupMenu patikaMenu;
 
 
+    // course listesi için model
+    private DefaultTableModel mdl_course_list;
+    private Object[] row_course_list;
     private final Operator operator;
 
     public OperatorGUI(Operator operator) {
@@ -123,6 +136,8 @@ public class OperatorGUI extends JFrame {
                     Helper.showMsg("done");
                 }
                 loadUserModel(); // bu şekilde hata versede değiştirmemesı için tabloyu hep veri tabanından çekiyoruz
+                loadEducatorCombo();
+                loadCourseModel();
             }
         });
         // ## ModelUserList
@@ -145,6 +160,8 @@ public class OperatorGUI extends JFrame {
                 @Override
                 public void windowClosed(WindowEvent e) {
                     loadPatikaModel();//bu şekilde patika arayüzü kapanınca güncelleme yapılan isim db den çekilecek
+                    loadPatikaCombo();
+                    loadCourseModel();
                 }
             });
 
@@ -157,6 +174,7 @@ public class OperatorGUI extends JFrame {
                 if (Patika.delete(select_id)) {
                     Helper.showMsg("done");
                     loadPatikaModel();
+                    loadPatikaCombo();
                 } else {
                     Helper.showMsg("error");
                 }
@@ -187,6 +205,21 @@ public class OperatorGUI extends JFrame {
         });
         // ## PatikaList
 
+        // CourseList
+        mdl_course_list = new DefaultTableModel();
+        Object[] col_courseList = {"ID", "Ders Adı", "Programlama Dili", "Patika", "Eğitmen"};
+        mdl_course_list.setColumnIdentifiers(col_courseList);
+        row_course_list = new Object[col_courseList.length];
+
+        loadCourseModel();
+
+        tbl_course_list.setModel(mdl_course_list);
+        tbl_course_list.getColumnModel().getColumn(0).setMaxWidth(75);
+        tbl_course_list.getTableHeader().setReorderingAllowed(false);
+
+        loadPatikaCombo(); // Patika combobox courseList
+        loadEducatorCombo(); // Educator combobox courseLİst
+        // ## CourseList
 
         // Butona tıklama ile yapılacak
         btn_user_add.addActionListener(e -> {
@@ -204,6 +237,7 @@ public class OperatorGUI extends JFrame {
                     Helper.showMsg("done");
 
                     loadUserModel();
+                    loadEducatorCombo(); // educator eklemesi yapılınca educator combo box güncellenir
                     // kayıt işlemi gerçekleşince textFieldları temizlemek için
                     fld_user_name.setText(null);
                     fld_user_username.setText(null);
@@ -225,6 +259,9 @@ public class OperatorGUI extends JFrame {
                     if (User.delete(user_id)) {
                         Helper.showMsg("done");
                         loadUserModel(); // silme işleminden sonra
+                        loadEducatorCombo();
+                        loadCourseModel();
+                        fld_user_id.setText(null);
                     } else
                         Helper.showMsg("error");
                 }
@@ -256,12 +293,46 @@ public class OperatorGUI extends JFrame {
                 if (Patika.add(fld_patika_name.getText())) {
                     Helper.showMsg("done");
                     loadPatikaModel();
+                    loadPatikaCombo(); // Patika ya ekleme yaptıkça ComboBox u güncellemek için
                     fld_patika_name.setText(null);
                 } else {
                     Helper.showMsg("error");
                 }
             }
         });
+        // Dersler Ekle butonu
+        btn_course_add.addActionListener(e -> {
+            Item patikaItem = (Item) cmb_course_patika.getSelectedItem();
+            Item userItem = (Item) cmb_course_user.getSelectedItem();
+            if (Helper.isFieldEmpty(fld_course_name) || Helper.isFieldEmpty(fld_course_lang)) {
+                Helper.showMsg("fill");
+            } else {
+                if (Course.add(userItem.getKey(), patikaItem.getKey(), fld_course_name.getText(), fld_course_lang.getText())) {
+                    Helper.showMsg("done");
+                    loadCourseModel();
+                    fld_course_lang.setText(null);
+                    fld_course_name.setText(null);
+                } else {
+                    Helper.showMsg("error");
+                }
+            }
+        });
+    }
+
+    private void loadCourseModel() {
+        DefaultTableModel clearModel = (DefaultTableModel) tbl_course_list.getModel();
+        clearModel.setRowCount(0);
+        int i = 0;
+        for (Course obj : Course.getList()) {
+            i = 0;
+            row_course_list[i++] = obj.getId();
+            row_course_list[i++] = obj.getName();
+            row_course_list[i++] = obj.getLang();
+            row_course_list[i++] = obj.getPatika().getName();
+            row_course_list[i++] = obj.getEducator().getName();
+            mdl_course_list.addRow(row_course_list);
+        }
+
     }
 
 
@@ -313,6 +384,24 @@ public class OperatorGUI extends JFrame {
             row_user_list[i++] = obj.getType();
             // oluşturduğumuz bu satır modelini modelimize ekleyebiliriz
             mdl_user_list.addRow(row_user_list);
+        }
+    }
+
+    // courseList için combobox methodu
+    public void loadPatikaCombo() {
+        cmb_course_patika.removeAllItems();
+        for (Patika obj : Patika.getList()) {
+            cmb_course_patika.addItem(new Item(obj.getId(), obj.getName()));
+        }
+    }
+
+    // Eğitmenler için combobox methodu
+    public void loadEducatorCombo() {
+        cmb_course_user.removeAllItems();
+        for (User obj : User.getList()) {
+            if (obj.getType().equals("educator")) {
+                cmb_course_user.addItem(new Item(obj.getId(), obj.getName()));
+            }
         }
     }
 
