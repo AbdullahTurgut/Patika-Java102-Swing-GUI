@@ -101,6 +101,37 @@ public class User {
         return obj;
     }
 
+    // Kullanıcı girişi yaparken kullanacağımız getFetch(String username,String password)
+    public static User getFetch(String username, String password) {
+        User obj = null;
+        String query = "SELECT * FROM userTable WHERE username = ? AND password = ?";
+        try {
+            PreparedStatement pr = DBConnector.getInstance().prepareStatement(query);
+            pr.setString(1, username);
+            pr.setString(2, password);
+            ResultSet resultSet = pr.executeQuery();
+            if (resultSet.next()) {
+                // login yaparken typeCasting yapmamızı engellediği için
+                switch (resultSet.getString("type")) {
+                    case "operator":
+                        obj = new Operator();
+                        break;
+                    default:
+                        obj = new User();
+                }
+                obj.setId(resultSet.getInt("id"));
+                obj.setName(resultSet.getString("name"));
+                obj.setUsername(resultSet.getString("username"));
+                obj.setPassword(resultSet.getString("password"));
+                obj.setType(resultSet.getString("type"));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return obj;
+    }
+
     // getFetch(int id)
     public static User getFetch(int id) {
         User obj = null;

@@ -283,6 +283,7 @@ public class OperatorGUI extends JFrame {
         // Çıkış yap Butonu için
         btn_logout.addActionListener(e -> {
             dispose(); // kapatma işlemi sağlar dispose
+            LoginGUI loginGUI = new LoginGUI(); // çıkış yapınca tekrar giriş yap ekranına girmek için
         });
 
         // Patika listemize ekleme yapmak için
